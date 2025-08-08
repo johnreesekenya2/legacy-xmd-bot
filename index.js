@@ -39,12 +39,12 @@ async function connectToWhatsApp() {
         console.log(chalk.cyan('💡 Please provide a valid session ID in config.js'));
         return;
     }
-    
+
     console.log(chalk.green('✅ Session ID validated: ' + config.sessionId.substring(0, 20) + '...'));
-    
+
     // Try to initialize session from session ID
     console.log(chalk.blue('🔄 Checking for existing session...'));
-    
+
     const hasSession = await hasValidSession();
     if (!hasSession) {
         console.log(chalk.yellow('⚠️  No valid session found, attempting to initialize...'));
@@ -60,10 +60,10 @@ async function connectToWhatsApp() {
     } else {
         console.log(chalk.green('📱 Valid session found, attempting connection...'));
     }
-    
+
     const { state, saveCreds } = await useMultiFileAuthState('./session');
     console.log(chalk.blue('🔄 Connecting to WhatsApp...'));
-    
+
     const logger = {
         info: () => {},
         error: () => {},
@@ -76,26 +76,33 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        printQRInTerminal: false,
+        printQRInTerminal: false, // Never show QR code
         logger: logger,
         browser: ['LEGACY XMD', 'Chrome', '1.0.0'],
         generateHighQualityLinkPreview: true,
         markOnlineOnConnect: true,
         defaultQueryTimeoutMs: 60000,
-        qrTimeout: 0, // Disable QR timeout
-        connectTimeoutMs: 30000,
-        emitOwnEvents: false
+        connectTimeoutMs: 60000,
+        emitOwnEvents: false,
+        syncFullHistory: false,
+        shouldSyncHistoryMessage: () => false,
+        shouldIgnoreJid: jid => isJidBroadcast(jid),
+        getMessage: async (key) => {
+            return {
+                conversation: "Hello!"
+            }
+        }
     });
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
-        
+
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect?.error instanceof Boom) &&
                 lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
-            
+
             console.log(chalk.red('❌ Connection closed due to:'), lastDisconnect?.error);
-            
+
             if (shouldReconnect) {
                 console.log(chalk.yellow('🔄 Reconnecting in 5 seconds...'));
                 setTimeout(connectToWhatsApp, 5000);
@@ -109,34 +116,34 @@ async function connectToWhatsApp() {
             console.log(chalk.green(config.messages.sessionActive));
             console.log(chalk.blue(`📱 Connected as: ${sock.user.name}`));
             console.log(chalk.green('✅ Bot is now active and ready!'));
-            
+
             // Initialize bot features
             await initializeBot(sock);
-            
+
             // Setup anti-delete feature
             if (config.features.antidelete) {
                 setupAntiDelete(sock);
             }
-            
+
             // Setup anti-view once feature
             if (config.features.antiviewonce) {
                 setupAntiViewOnce(sock);
             }
-            
+
             // Setup auto react to status
             if (config.features.autoreactstatus) {
                 setupAutoReactStatus(sock);
             }
         }
-        
+
         if (qr) {
-            console.log(chalk.red('❌ QR generation should be disabled - session ID should handle connection'));
-            console.log(chalk.yellow('⚠️  This indicates session format needs adjustment for direct connection'));
+            console.log(chalk.red('❌ QR generation detected - this should not happen with valid session ID'));
+            console.log(chalk.yellow('⚠️  Session ID may be corrupted or invalid'));
         }
     });
 
     sock.ev.on('creds.update', saveCreds);
-    
+
     // Handle incoming messages
     sock.ev.on('messages.upsert', async (m) => {
         if (m.messages && m.messages[0]) {
