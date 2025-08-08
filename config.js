@@ -9,12 +9,12 @@ const config = {
     // Owner Information
     owner: {
         name: "John Reese",
-        number: "254745282166",
-        prefix: "254745282166@s.whatsapp.net"
+        number: process.env.OWNER_NUMBER || "254745282166",
+        prefix: (process.env.OWNER_NUMBER || "254745282166") + "@s.whatsapp.net"
     },
     
     // Session Configuration
-    sessionId: "LEGACY-XMD~6MFwnTzR#YG0tLwmhTtpkGCBvhSWDoftSMcZ6cnu7NUK-2XVQ488",
+    sessionId: process.env.SESSION_ID || "LEGACY-XMD~6MFwnTzR#YG0tLwmhTtpkGCBvhSWDoftSMcZ6cnu7NUK-2XVQ488",
     
     // Bot Features Toggle
     features: {
@@ -39,9 +39,9 @@ const config = {
     
     // API Keys (Add your keys here)
     apiKeys: {
-        youtube: "", // For YouTube downloads
-        openai: "", // For AI chat
-        gemini: "", // Alternative AI
+        youtube: process.env.YOUTUBE_API_KEY || "", // For YouTube downloads
+        openai: process.env.OPENAI_API_KEY || "", // For AI chat
+        gemini: process.env.GEMINI_API_KEY || "", // Alternative AI
     },
     
     // Messages
