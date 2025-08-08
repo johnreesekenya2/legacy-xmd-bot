@@ -1,12 +1,12 @@
 // Message Handler for LEGACY XMD
 const config = require('../config');
-const { getMenuMessage } = require('./commands/menu');
+const { getMenuMessage } = require('./commands/menu.js');
 // Anti-delete is handled in features, not commands
-const { handleYTDownload } = require('./commands/ytdownload');
-const { handleAIChat } = require('./commands/aichat');
-const { handleApkSearch } = require('./commands/apksearch');
-const { handleStats, handleAbout } = require('./commands/extra');
-const { isOwner, extractCommand, delay } = require('./utils/botUtils');
+const { handleYTDownload } = require('./commands/ytdownload.js');
+const { handleAIChat } = require('./commands/aichat.js');
+const { handleApkSearch } = require('./commands/apksearch.js');
+const { handleStats, handleAbout } = require('./commands/extra.js');
+const { isOwner, extractCommand, delay } = require('./utils/botUtils.js');
 
 async function handleMessage(sock, message) {
     try {
