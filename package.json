@@ -1,14 +1,23 @@
 {
-  "name": "workspace",
+  "name": "legacy-xmd-bot",
   "version": "1.0.0",
+  "description": "LEGACY XMD - Advanced WhatsApp Bot with Anti-Delete, YouTube Downloads, AI Chat & More",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": ["whatsapp", "bot", "baileys", "nodejs", "legacy-xmd"],
+  "author": "John Reese <johnreese@legacy-xmd.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnreesekenya2/legacy-xmd-bot.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",
     "axios": "^1.11.0",
