@@ -8,7 +8,13 @@
     "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["whatsapp", "bot", "baileys", "nodejs", "legacy-xmd"],
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "nodejs",
+    "legacy-xmd"
+  ],
   "author": "John Reese <johnreese@legacy-xmd.com>",
   "license": "MIT",
   "repository": {
@@ -19,6 +25,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@hapi/boom": "^10.0.1",
     "@whiskeysockets/baileys": "^6.7.18",
     "axios": "^1.11.0",
     "chalk": "^4.1.2",
