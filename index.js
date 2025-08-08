@@ -77,6 +77,7 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
         auth: state,
         printQRInTerminal: false, // Never show QR code
+        qrTimeout: 0, // Disable QR timeout
         logger: logger,
         browser: ['LEGACY XMD', 'Chrome', '1.0.0'],
         generateHighQualityLinkPreview: true,
@@ -91,6 +92,9 @@ async function connectToWhatsApp() {
             return {
                 conversation: "Hello!"
             }
+        },
+        options: {
+            disableAutoReconnect: false
         }
     });
 
@@ -137,8 +141,9 @@ async function connectToWhatsApp() {
         }
 
         if (qr) {
-            console.log(chalk.red('❌ QR generation detected - this should not happen with valid session ID'));
-            console.log(chalk.yellow('⚠️  Session ID may be corrupted or invalid'));
+            console.log(chalk.red('❌ QR generation blocked - using session ID only'));
+            console.log(chalk.yellow('⚠️  No QR code will be displayed as requested'));
+            // Do not process QR at all
         }
     });
 
