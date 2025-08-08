@@ -1,3 +1,4 @@
+
 // Session Utilities for LEGACY XMD
 const fs = require('fs-extra');
 const path = require('path');
@@ -8,45 +9,51 @@ function parseSessionString(sessionId) {
     const sessionData = sessionId.replace('LEGACY-XMD~', '');
     
     try {
-        // Try base64 decode first
-        const decoded = Buffer.from(sessionData, 'base64').toString('utf-8');
-        return JSON.parse(decoded);
+        // Split on # if present
+        const parts = sessionData.split('#');
+        const mainData = parts[0];
+        
+        // Try base64 decode
+        const decoded = Buffer.from(mainData, 'base64').toString('utf-8');
+        const parsed = JSON.parse(decoded);
+        return parsed;
     } catch {
         try {
-            // Try URL-safe base64
-            const urlSafe = sessionData.replace(/-/g, '+').replace(/_/g, '/');
-            const decoded = Buffer.from(urlSafe, 'base64').toString('utf-8');
-            return JSON.parse(decoded);
+            // Try direct JSON parse
+            return JSON.parse(sessionData);
         } catch {
-            // Return null if can't decode - session likely needs fresh pairing
-            return null;
+            // Return raw session data for manual processing
+            return { rawData: sessionData };
         }
     }
 }
 
-function createMinimalSession() {
-    // Create a minimal session structure that prevents QR generation
-    // This forces the bot to use session-based authentication only
+function createSessionFromId() {
+    const sessionData = config.sessionId.replace('LEGACY-XMD~', '');
+    const parts = sessionData.split('#');
+    const sessionKey = parts[0];
+    
+    // Create proper session structure using the session key
     return {
         creds: {
             noiseKey: {
-                private: Buffer.alloc(32),
-                public: Buffer.alloc(32)
+                private: Buffer.from(sessionKey.substring(0, 32), 'base64'),
+                public: Buffer.from(sessionKey.substring(32, 64), 'base64')
             },
             signedIdentityKey: {
-                private: Buffer.alloc(32), 
-                public: Buffer.alloc(32)
+                private: Buffer.from(sessionKey.substring(64, 96), 'base64'),
+                public: Buffer.from(sessionKey.substring(96, 128), 'base64')
             },
             signedPreKey: {
                 keyPair: {
-                    private: Buffer.alloc(32),
-                    public: Buffer.alloc(32)
+                    private: Buffer.from(sessionKey.substring(128, 160), 'base64'),
+                    public: Buffer.from(sessionKey.substring(160, 192), 'base64')
                 },
-                signature: Buffer.alloc(64),
+                signature: Buffer.from(sessionKey.substring(192, 256), 'base64'),
                 keyId: 1
             },
-            registrationId: Math.floor(Math.random() * 16777215) + 1,
-            advSecretKey: config.sessionId.replace('LEGACY-XMD~', '').substring(0, 32),
+            registrationId: parseInt(sessionKey.substring(256, 264), 16) || Math.floor(Math.random() * 16777215) + 1,
+            advSecretKey: sessionKey.substring(0, 32),
             processedHistoryMessages: [],
             nextPreKeyId: 31,
             firstUnuploadedPreKeyId: 31,
@@ -60,7 +67,15 @@ function createMinimalSession() {
             },
             platform: 'web',
             lastAccountSyncTimestamp: Date.now(),
-            registered: false // This prevents QR generation
+            registered: true // Mark as registered to prevent QR
+        },
+        keys: {
+            preKeys: {},
+            sessions: {},
+            senderKeys: {},
+            appStateSyncKeys: {},
+            appStateVersions: {},
+            senderKeyMemory: {}
         }
     };
 }
@@ -74,11 +89,16 @@ async function initializeSession() {
     }
     
     try {
-        // Create minimal session that prevents QR generation
-        const minimalSession = createMinimalSession();
-        await fs.writeJson(path.join(sessionDir, 'creds.json'), minimalSession.creds);
+        // Create session from existing session ID
+        const sessionData = createSessionFromId();
         
-        console.log('✅ Session configured for direct connection (No QR)');
+        // Write credentials
+        await fs.writeJson(path.join(sessionDir, 'creds.json'), sessionData.creds);
+        
+        // Write keys
+        await fs.writeJson(path.join(sessionDir, 'keys.json'), sessionData.keys);
+        
+        console.log('✅ Session created from existing session ID');
         return true;
     } catch (error) {
         console.log('❌ Error creating session:', error.message);
@@ -93,7 +113,7 @@ async function hasValidSession() {
     try {
         if (await fs.pathExists(credsFile)) {
             const creds = await fs.readJson(credsFile);
-            return creds && Object.keys(creds).length > 0;
+            return creds && creds.registered === true;
         }
         return false;
     } catch {
@@ -103,5 +123,6 @@ async function hasValidSession() {
 
 module.exports = {
     initializeSession,
-    hasValidSession
+    hasValidSession,
+    parseSessionString
 };
